@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load enroll %}
+{% load group %}
+{% load embed_video_tags %}
+{% block title %}
+  {{ object.title }}
+{% endblock %}
+
+{% block content %}
+    <h1>
+      {{ object.title }}
+    </h1>
+    <div class="module">
+      <h2>
+     Teacher: {{ object.teacher.get_full_name }}
+    </h2>
+     {{ object.overview|linebreaks }}
+      {% if user.is_authenticated %}
+      {% if user|has_group:'Teacher' %}
+      <div class="info"> 
+        <br>{{object.description| safe }}</br>
+        <br><b>When:</b> {{object.planned_date}}</br>
+        <br><b>Where:</b> {{object.address}}</br>
+        {% video class.video_url as my_video %}
+        <br> {% video my_video "small" %} </br>
+        {% endvideo %}
+        </div>
+      {% endif %}
+      {% if user|has_enrolled:object.id %}
+      {% else %}
+      {% if user|has_group:'Teacher' %}
+      {% else %}
+        <form action="{% url 'student_enroll_class' %}" method="post">
+          {{ enroll_form }}
+          {% csrf_token %}
+          <input type="submit" value="Enroll now">
+        </form>
+        {% endif %}
+        {% endif %}
+      {% else %}
+      {% if user|has_group:'Teacher' %}
+      {% else %}
+        <a href="{% url "register" %}" class="button">
+          Register to enroll
+        </a>
+      {% endif %}
+      {% endif %}
+    </div>
+{% endblock %}

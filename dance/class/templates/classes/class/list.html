@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load group %}
+{% load thumbnail %}
+{% block title %}My classes{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+{% if user|has_group:'Teacher' %}
+<h1>My classes</h1>
+{% else %}
+<h1>All classes</h1>
+{% endif %}
+{% if classes %}
+<div id="my-people-list">
+    {% include "classes/class/class_list.html" %}
+</div>
+{% else %}
+<h2>You haven't created any class yet</h2>
+{% endif %}
+{% else %}
+<h1>Please login to see dance classes</h1>
+{% endif %}
+{% endblock %}
+{% block domready %}
+ var page = 1;
+ var emptyPage = false;
+ var blockRequest = false;
+ window.addEventListener('scroll', function(e) {
+ var margin = document.body.clientHeight - window.innerHeight - 200;
+ if(window.pageYOffset > margin && !emptyPage && !blockRequest) {
+ blockRequest = true;
+ page += 1;
+ fetch('?classes_only=1&page=' + page)
+ .then(response => response.text())
+ .then(html => {
+ if (html === '') {
+ emptyPage = true;
+ }
+ else {
+ var imageList = document.getElementById('my-people-list');
+ imageList.insertAdjacentHTML('afterend', html);
+ blockRequest = false;
+ }
+ })
+ }
+ });
+ // Launch scroll event
+ const scrollEvent = new Event('scroll');
+ window.dispatchEvent(scrollEvent);
+{% endblock %} 

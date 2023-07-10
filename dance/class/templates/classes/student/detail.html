@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load cache %}
+{% load group %}
+{% load thumbnail %}
+{% load embed_video_tags %}
+{% block title %}
+  {{ object.title }}
+{% endblock %}
+
+{% block content %}
+<h1>
+  {{ object.title }}
+</h1>
+<div class="user">
+{% if user|has_group:'Teacher' %}
+{% else %}
+<br>
+<a href="#">
+    <img src="{% thumbnail object.teacher.profile.photo 180x180 %}">
+</a>
+{{object.teacher.first_name }} {{object.teacher.last_name}}
+</br>
+{% endif %}
+<div class="info"> 
+<br>{{object.description| safe }}</br>
+<br><b>When:</b> {{object.planned_date}}</br>
+<br><b>Where:</b> {{object.address}}</br>
+{% video object.video_url as my_video %}
+<br> {% video my_video "small" %} </br>
+{% endvideo %}
+</div>
+</div>
+{% endblock %}

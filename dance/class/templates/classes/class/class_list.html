@@ -1,0 +1,36 @@
+{% load thumbnail %}
+{% load group %}
+{% load enroll %}
+<div id="people-list">
+{% for class in classes %}
+<div class="user">
+{% if user|has_group:'Teacher' %}
+{% else %}
+<br>
+<a href="#">
+    <img src="{% thumbnail class.teacher.profile.photo 180x180 %}">
+</a>
+{{class.teacher.first_name }} {{class.teacher.last_name}}
+</br>
+{% endif %}
+<div class="info"> 
+    {% if user|has_group:'Teacher' %}
+    <br><a href="{% url 'class_detail' class.slug %}">{{class.title}}</a></br>
+    {% else %}
+ {% if user|has_enrolled:class.id %}
+<br><a href="{% url 'student_class_detail' class.id %}">{{class.title}}</a></br>
+{% else %}
+<br><a href="{% url 'class_detail' class.slug %}">{{class.title}}</a></br>
+{% endif %}
+{% endif %}
+<br><b>When:</b> {{class.planned_date}}</br>
+<br><b>Where:</b> {{class.address}}</br>
+{% if user|has_group:'Teacher' %}
+<br><a href="{% url 'class_update' class.id %}">Edit</a></br>
+{% else %}
+<br><a href="{% url 'class_detail' class.slug %}">Register</a></br>
+{% endif %}
+</div>
+</div>
+{% endfor %}
+</div>
