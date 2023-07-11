@@ -12,7 +12,9 @@ class ClassForm(forms.ModelForm):
         exclude = ['teacher',
                    'slug',
                     'created',
-                    'students']
+                    'students',
+                    'likes_count',
+                    'users_like',]
         
         widgets = {
             'planned_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),

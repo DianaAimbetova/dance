@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
-from .models import Class
+from .models import Class, Likes
 from django.views.generic.list import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic.base import TemplateResponseMixin, View
@@ -18,6 +18,11 @@ from django.forms.models import modelform_factory
 from django.core.exceptions import PermissionDenied
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+import logging
+import sys
 
 
 # Create your views here.
@@ -147,3 +152,88 @@ class ClassCreateUpdateView(LoginRequiredMixin, TemplateResponseMixin, View):
             obj.teacher = request.user
             obj.save()
         return HttpResponseRedirect(reverse('class'))
+    
+
+@login_required
+@require_POST
+def class_like(request):
+    class_id = request.POST.get('id')
+    action = request.POST.get('action')
+    if class_id and action:
+        try:
+            my_class = Class.objects.get(id=class_id)
+            if action == 'like':
+                my_class.users_like.add(request.user)
+                my_class.likes_count = my_class.likes_count + 1
+                Likes.objects.create(user=request.user, dance_class=my_class)
+            else:
+                my_class.users_like.remove(request.user)
+                my_class.likes_count = my_class.likes_count - 1
+                Likes.objects.filter(user=request.user, dance_class=my_class).delete()
+            my_class.save()
+            return JsonResponse({'status': 'ok'})
+        except Class.DoesNotExist:
+            pass
+    return JsonResponse({'status': 'error'})
+
+class FavouriteClassListView(TemplateResponseMixin, View):
+    model = Class
+    template_name = 'classes/class/favourite_list.html'
+
+    def get(self, request):
+        classes = Class.objects.filter(planned_date__gt=timezone.now(), users_like__in=[self.request.user])
+        paginator = Paginator(classes, 2)
+        page = request.GET.get('page')
+        classes_only = request.GET.get('classes_only')
+        try:
+            classes = paginator.page(page)
+        except PageNotAnInteger:
+            classes = paginator.page(1)
+        except EmptyPage:
+            if classes_only:
+                return HttpResponse('')
+            classes = paginator.page(paginator.num_pages)
+        if classes_only:
+             return render(request,'classes/class/class_list.html',
+                      {'classes': classes})
+        return self.render_to_response({'classes': classes})
+    
+
+class EnrolledClassListView(TemplateResponseMixin, View):
+    model = Class
+    template_name = 'classes/class/enrolled_list.html'
+
+    def get(self, request):
+        classes = Class.objects.filter(planned_date__gt=timezone.now(), students__in=[self.request.user])
+        paginator = Paginator(classes, 2)
+        page = request.GET.get('page')
+        classes_only = request.GET.get('classes_only')
+        try:
+            classes = paginator.page(page)
+        except PageNotAnInteger:
+            classes = paginator.page(1)
+        except EmptyPage:
+            if classes_only:
+                return HttpResponse('')
+            classes = paginator.page(paginator.num_pages)
+        if classes_only:
+             return render(request,'classes/class/class_list.html',
+                      {'classes': classes})
+        return self.render_to_response({'classes': classes})
+    
+@login_required
+@require_POST
+def remove_class(request):
+    class_id = request.POST.get('id')
+    if class_id:
+        try:
+            class_to_remove = get_object_or_404(Class,
+                            id=class_id)
+            class_to_remove.delete()
+            return JsonResponse({'status': 'ok'})
+        except Class.DoesNotExist:
+            pass
+    return JsonResponse({'status': 'error'})
+    
+    
+

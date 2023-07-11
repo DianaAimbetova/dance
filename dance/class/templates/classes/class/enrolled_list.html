@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load group %}
+{% load enroll %}
+{% load thumbnail %}
+{% block title %}My classes{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+{% if user|has_group:'Teacher' %}
+<h1>My classes</h1>
+{% else %}
+<h1>My enrolled classes</h1>
+{% endif %}
+{% if classes %}
+
+    <div id="people-list">
+    {% for class in classes %}
+<div class="user">
+{% if user|has_group:'Teacher' %}
+{% else %}
+<br>
+<a href="#">
+    <img src="{% thumbnail class.teacher.profile.photo 180x180 %}">
+</a>
+{{class.teacher.first_name }} {{class.teacher.last_name}}
+</br>
+{% endif %}
+<div class="info"> 
+    {% if user|has_group:'Teacher' %}
+    <br><a href="{% url 'class_detail' class.slug %}">{{class.title}}</a></br>
+    {% else %}
+ {% if user|has_enrolled:class.id %}
+<br><a href="{% url 'student_class_detail' class.id %}">{{class.title}}</a></br>
+{% else %}
+<br><a href="{% url 'class_detail' class.slug %}">{{class.title}}</a></br>
+{% endif %}
+{% endif %}
+<br><b>When:</b> {{class.planned_date}}</br>
+<br><b>Where:</b> {{class.address}}</br>
+
+{% with users_like=class.users_like.all %}
+
+<a href="#" id="like" data-id="{{ class.id }}" data-action="{% if request.user in users_like %}un{% endif %}like">
+    {% if request.user not in users_like %}
+    <img src="/media/images/unlike.png" style="height: 24px; width: 24px; float: right;" id="img_like_{{class.id}}">
+    {% else %}
+     <img src="/media/images/like.png" style="height: 24px; width: 24px; float: right;" id="img_like_{{class.id}}">
+     {% endif %}
+</a>
+<span class="count" style="float: right;">
+    <span class="total_{{class.id}}">{{ class.likes_count }}</span>
+    </span>
+    {% endwith %}
+</div>
+</div>
+
+{% endfor %}
+</div>
+
+{% else %}
+<h2 id = "title" style=" text-align: center">You don't have enrolled classes yet</h2>
+{% endif %}
+{% else %}
+<h1>Please login to see your favourite classes</h1>
+{% endif %}
+{% endblock %}
+{% block domready %}
+ var page = 1;
+ var emptyPage = false;
+ var blockRequest = false;
+ window.addEventListener('scroll', function(e) {
+ var margin = document.body.clientHeight - window.innerHeight - 200;
+ if(window.pageYOffset > margin && !emptyPage && !blockRequest) {
+ blockRequest = true;
+ page += 1;
+ fetch('?classes_only=1&page=' + page)
+ .then(response => response.text())
+ .then(html => {
+ if (html === '') {
+ emptyPage = true;
+ }
+ else {
+ var imageList = document.getElementById('people-list');
+ imageList.insertAdjacentHTML('afterend', html);
+ blockRequest = false;
+ }
+ })
+ }
+    var likeButtons = document.querySelectorAll("#like");
+    for (var likeButton of likeButtons){
+        likeButton.addEventListener('click', handleLikes);
+    }
+});
+
+
+ function handleLikes(event){
+    const url = "{% url 'class_like' %}";
+    var options = {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrftoken},
+        mode: 'same-origin'
+    }
+        event.preventDefault();
+        var likeButton = this;
+        var formData = new FormData();
+        formData.append('id', likeButton.dataset.id);
+        formData.append('action', likeButton.dataset.action);
+        options['body'] = formData;
+        // send HTTP request
+        fetch(url, options)
+        .then(response => response.json())
+        .then(data => {
+        if (data['status'] === 'ok')
+        {
+            var previousAction = likeButton.dataset.action;
+        // toggle button text and data-action
+        var action = previousAction === 'like' ? 'unlike' : 'like';
+        likeButton.dataset.action = action;
+        // update like count
+        var likeCount = document.querySelector(`span.count .total_${likeButton.dataset.id}`);
+        var totalLikes = parseInt(likeCount.innerHTML);
+        likeCount.innerHTML = previousAction === 'like' ? totalLikes + 1 : totalLikes - 1;
+        var imgLike = document.querySelector(`#img_like_${likeButton.dataset.id}`);
+        imgLike.src=previousAction === 'like' ? "/media/images/like.png" : "/media/images/unlike.png"
+        }
+   })
+}
+
+
+ // Launch scroll event
+ const scrollEvent = new Event('scroll');
+ window.dispatchEvent(scrollEvent);
+{% endblock %} 

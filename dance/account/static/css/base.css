@@ -207,10 +207,8 @@ ul.messages li a.close {
 }
 .count {
     color:#aaa;
-    border:3px solid #bbb;
-    border-radius:26px;
-    padding:10px 20px;
-    margin:20px 10px 0;
+    margin:3px -40px;
+    float: right;
 }
 a.like, a.follow { float:right; margin-top:-8px; }
 
@@ -293,3 +291,22 @@ img.user-detail {
     font-size:14px;
     border:3px solid #bbb;
 }
+
+#like {
+    width: 24px;
+    height: 24px;
+}
+
+.media-content {
+    flex-basis: auto;
+    flex-grow: 1;
+    flex-shrink: 1;
+    text-align: inherit;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .media-content {
+      overflow-x: auto;
+    }
+  }
+  

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load group %}
+{% load enroll %}
+{% load thumbnail %}
+{% load static %}
+{% block title %}My notifications{% endblock %}
+{% block content %}
+{% if user.is_authenticated %}
+{% if user|has_group:'Teacher' %}
+<link href="{% static "css/notification.css" %}" rel="stylesheet">
+{% if notifications %}
+{% for notification  in notifications %}
+<article class="media">
+    <figure class="media-left">
+      <p class="image is-64x64">
+        <img src="{% thumbnail notification.sender_profile.photo 180x180 %}">
+      </p>
+    </figure>
+    <div class="media-content">
+      <div class="content">
+        <p>
+          <strong>{{notification.sender.first_name}} {{notification.sender.last_name}}</strong> <small>@{{notification.sender.username}}</small>
+          <br> 
+          <p> <img src="/media/images/like.png">  Liked your class <b> {{notification.dance_class.title}} </b> </p>
+          <strong><small><i>{{ notification.date }}</i>/</small></strong>
+          </p>
+      </div>
+    </div>
+    <div class="media-right">
+        <a href="{% url 'delete-notification' notification.id %}" class="delete"></a>
+    </div>
+  </article>
+  {%endfor%}
+  {% else %}
+  <h1 style="text-align: center;">No new notifications so far</h1>
+  {% endif %}
+{% endif %}
+{% endif %}
+{%endblock%}

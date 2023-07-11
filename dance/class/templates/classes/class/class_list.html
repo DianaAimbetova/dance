@@ -28,9 +28,67 @@
 {% if user|has_group:'Teacher' %}
 <br><a href="{% url 'class_update' class.id %}">Edit</a></br>
 {% else %}
-<br><a href="{% url 'class_detail' class.slug %}">Register</a></br>
+<br><a href="{% url 'class_detail' class.slug %}">Enroll</a></br>
 {% endif %}
+
+{% with users_like=class.users_like.all %}
+
+<a href="#" id="like" data-id="{{ class.id }}" data-action="{% if request.user in users_like %}un{% endif %}like">
+    {% if request.user not in users_like %}
+    <img src="/media/images/unlike.png" style="height: 24px; width: 24px; float: right;" id="img_like_{{class.id}}">
+    {% else %}
+     <img src="/media/images/like.png" style="height: 24px; width: 24px; float: right;" id="img_like_{{class.id}}">
+     {% endif %}
+</a>
+<span class="count" style="float: right;">
+    <span class="total_{{class.id}}">{{ class.likes_count }}</span>
+    </span>
+    {% endwith %}
 </div>
 </div>
 {% endfor %}
 </div>
+<script src="//cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+<script>
+    const csrftoken = Cookies.get('csrftoken');
+    document.addEventListener('DOMContentLoaded', (event) => {
+    // DOM loaded
+    const url = "{% url 'class_like' %}";
+    var options = {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrftoken},
+        mode: 'same-origin'
+    }
+    var likeButtons = document.querySelectorAll("#like");
+    for (var likeButton of likeButtons){
+    likeButton.addEventListener('click', function(event){
+        event.preventDefault();
+        var likeButton = this;
+        var formData = new FormData();
+        formData.append('id', likeButton.dataset.id);
+        formData.append('action', likeButton.dataset.action);
+        options['body'] = formData;
+        // send HTTP request
+        fetch(url, options)
+        .then(response => response.json())
+        .then(data => {
+        if (data['status'] === 'ok')
+        {
+            var previousAction = likeButton.dataset.action;
+        // toggle button text and data-action
+        var action = previousAction === 'like' ? 'unlike' : 'like';
+        likeButton.dataset.action = action;
+        // update like count
+        var likeCount = document.querySelector(`span.count .total_${likeButton.dataset.id}`);
+        var totalLikes = parseInt(likeCount.innerHTML);
+        likeCount.innerHTML = previousAction === 'like' ? totalLikes + 1 : totalLikes - 1;
+        var imgLike = document.querySelector(`#img_like_${likeButton.dataset.id}`);
+        imgLike.src=previousAction === 'like' ? "/media/images/like.png" : "/media/images/unlike.png"
+        }
+ })
+    
+});
+    }
+
+    });
+</script>

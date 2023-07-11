@@ -8,7 +8,7 @@
 </head>
 <body>
  <div id="header">
- <span class="logo"><a href="{% url 'class' %}">Dance</a></span>
+ <span class="logo"><a href="{% url 'main' %}">Dance</a></span>
  {% if request.user.is_authenticated %}
  <ul class="menu">
  <li {% if section == "dashboard" %}class="selected"{% endif %}>
@@ -17,13 +17,27 @@
  </li>
  <li {% if section == "images" %}class="selected"{% endif %}>
 
-    <a href="{% url 'class' %}">My Classes</a>
+    <a href="{% url 'class' %}">All Classes</a>
  </li>
+ {% if user|has_group:'Teacher' %}
+ {% else %}
+ <li {% if section == "images" %}class="selected"{% endif %}>
 
+   <a href="{% url 'favourite_class' %}">Favourite Classes</a>
+</li>
+<li {% if section == "images" %}class="selected"{% endif %}>
+
+   <a href="{% url 'class_enrolled' %}">Enrolled Classes</a>
+</li>
+{% endif %}
  {% if user|has_group:'Teacher' %}
  <li {% if section == "images" %}class="selected"{% endif %}>
 
    <a href="{% url 'class_create' %}">Create Class</a>
+</li>
+<li {% if section == "images" %}class="selected"{% endif %}>
+
+   <a href="{% url 'show-notifications' %}">Notifications</a>
 </li>
  {% endif %}
 </ul>

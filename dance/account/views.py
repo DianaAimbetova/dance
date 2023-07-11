@@ -47,3 +47,8 @@ def edit(request):
     
    return render(request, 'account/edit.html', {'user_form' : user_form,
                                              'profile_form' : profile_form})
+
+
+def get_teachers(request):
+    users = Profile.objects.filter(type='TEACHER')
+    return render(request, 'account/main.html', {'users':users})
